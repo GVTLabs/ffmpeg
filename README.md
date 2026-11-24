@@ -10,7 +10,7 @@ Static `ffmpeg` and `ffprobe` builds, built from source at pinned versions for:
 | source       | `ffmpeg-<version>-source.tar.xz`       |
 
 The Linux binaries are fully static (musl), so the same file runs on Debian,
-Ubuntu and Alpine. The macOS binaries link only `libSystem` and `libz`, which
+Ubuntu and Alpine. The macOS binaries link only `libSystem`, `libz` and `libc++` (for zimg), which
 every Mac has.
 
 ## What is in the build
@@ -24,7 +24,7 @@ so the build host cannot add features without a change here.
 | libsvtav1  | AV1 encoding (including AVIF) |
 | libdav1d   | AV1 decoding                  |
 | libmp3lame | MP3 encoding                  |
-| libzimg    | `zscale`: HDR to SDR tone-mapping, colour conversion |
+| libzimg    | `zscale` (HDR to SDR tone-mapping) |
 | OpenSSL    | `https://` inputs             |
 | zlib       | PNG, compressed MP4 headers   |
 

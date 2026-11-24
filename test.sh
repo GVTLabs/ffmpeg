@@ -46,7 +46,7 @@ Linux)
 	;;
 Darwin)
 	for b in "$FF" "$FP"; do
-		extra=$(otool -L "$b" | tail -n +2 | awk '{print $1}' | grep -vE '^/usr/lib/(libSystem\.B|libz\.1)\.dylib$' || true)
+		extra=$(otool -L "$b" | tail -n +2 | awk '{print $1}' | grep -vE '^/usr/lib/(libSystem\.B|libz\.1|libc\+\+\.1)\.dylib$' || true)
 		[ -z "$extra" ] || fail "$b links libraries that are not on every Mac: $extra"
 	done
 	;;
