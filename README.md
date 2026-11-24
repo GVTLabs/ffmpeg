@@ -24,6 +24,7 @@ so the build host cannot add features without a change here.
 | libsvtav1  | AV1 encoding (including AVIF) |
 | libdav1d   | AV1 decoding                  |
 | libmp3lame | MP3 encoding                  |
+| libzimg    | `zscale`: HDR to SDR tone-mapping, colour conversion |
 | OpenSSL    | `https://` inputs             |
 | zlib       | PNG, compressed MP4 headers   |
 
@@ -53,7 +54,7 @@ mise:
 # Linux, in Docker (writes bin/ and licenses/ to out/)
 docker buildx build --platform linux/arm64 --target dist --output type=local,dest=out .
 
-# macOS (needs cmake, meson, ninja, pkgconf)
+# macOS (needs autoconf, automake, cmake, libtool, meson, ninja, pkgconf)
 ./build.sh out && ./test.sh out/bin
 ```
 

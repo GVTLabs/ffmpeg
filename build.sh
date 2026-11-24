@@ -69,6 +69,7 @@ fetch_sources() {
 	# it into every H.264 stream it encodes, so the history must not be shallow.
 	fetch_git x264 "$X264_URL" "$X264_COMMIT"
 	fetch_git svtav1 "$SVTAV1_URL" "$SVTAV1_COMMIT" --depth 1
+	fetch_git zimg "$ZIMG_URL" "$ZIMG_COMMIT" --depth 1
 	fetch_tarball dav1d "$DAV1D_URL" "$DAV1D_SHA256"
 	fetch_tarball lame "$LAME_URL" "$LAME_SHA256"
 	fetch_tarball ffmpeg "$FFMPEG_URL" "$FFMPEG_SHA256"
@@ -169,6 +170,23 @@ build_svtav1() {
 	cp PATENTS.md "$OUT/licenses/svt-av1-PATENTS.md"
 }
 
+build_zimg() {
+	fetch_git zimg "$ZIMG_URL" "$ZIMG_COMMIT" --depth 1
+	cd "$SRC/zimg"
+	./autogen.sh
+	# zimg is C++, and a static libzimg.a leaves the C++ runtime to whoever links it:
+	# libstdc++ on Linux, libc++ on macOS. STL_LIBS lands in zimg.pc's Libs.private,
+	# which ffmpeg's configure reads through --pkg-config-flags=--static.
+	local stl_libs=-lstdc++
+	[ "$(uname -s)" = Darwin ] && stl_libs=-lc++
+	STL_LIBS=$stl_libs ./configure --prefix="$PREFIX" \
+		--enable-static --disable-shared \
+		--disable-dependency-tracking
+	make -j"$JOBS"
+	make install
+	cp COPYING "$OUT/licenses/zimg-COPYING"
+}
+
 build_dav1d() {
 	fetch_tarball dav1d "$DAV1D_URL" "$DAV1D_SHA256"
 	cd "$SRC/dav1d"
@@ -219,7 +237,7 @@ build_ffmpeg() {
 		--enable-gpl --enable-version3 \
 		--enable-pthreads --enable-zlib \
 		--enable-openssl \
-		--enable-libx264 --enable-libsvtav1 --enable-libdav1d --enable-libmp3lame
+		--enable-libx264 --enable-libsvtav1 --enable-libdav1d --enable-libmp3lame --enable-libzimg
 	make -j"$JOBS"
 	install -m 755 ffmpeg ffprobe "$OUT/bin/"
 	cp COPYING.GPLv3 "$OUT/licenses/ffmpeg-COPYING.GPLv3"
@@ -229,6 +247,7 @@ build_ffmpeg() {
 build_openssl
 build_x264
 build_svtav1
+build_zimg
 build_dav1d
 build_lame
 build_ffmpeg
