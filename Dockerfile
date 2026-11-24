@@ -2,7 +2,7 @@
 
 FROM alpine:3.22 AS build
 RUN apk add --no-cache \
-	bash build-base cmake curl git linux-headers meson nasm ninja perl pkgconf tar xz \
+	autoconf automake bash build-base cmake curl git libtool linux-headers meson nasm ninja perl pkgconf tar xz \
 	zlib-dev zlib-static
 WORKDIR /src
 COPY versions.env build.sh ./

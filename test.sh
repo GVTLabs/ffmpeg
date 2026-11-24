@@ -46,7 +46,7 @@ Linux)
 	;;
 Darwin)
 	for b in "$FF" "$FP"; do
-		extra=$(otool -L "$b" | tail -n +2 | awk '{print $1}' | grep -vE '^/usr/lib/(libSystem\.B|libz\.1)\.dylib$' || true)
+		extra=$(otool -L "$b" | tail -n +2 | awk '{print $1}' | grep -vE '^/usr/lib/(libSystem\.B|libz\.1|libc\+\+\.1)\.dylib$' || true)
 		[ -z "$extra" ] || fail "$b links libraries that are not on every Mac: $extra"
 	done
 	;;
@@ -68,7 +68,7 @@ has encoders 2 libx264 libsvtav1 libmp3lame aac mjpeg png pcm_s16le
 has decoders 2 libdav1d h264 hevc vp9 vp8 aac mp3 opus mjpeg png webp
 has muxers 2 mp4 avif hls image2 null wav mp3 matroska
 has demuxers 2 mov,mp4,m4a,3gp,3g2,mj2 hls matroska,webm image2 wav mp3
-has filters 2 showinfo select scale crop pad fps tile format setsar aresample
+has filters 2 showinfo select scale crop pad fps tile format setsar aresample zscale tonemap
 has protocols 1 https http file pipe
 
 step "h264 + aac in mp4"
@@ -98,6 +98,14 @@ step "mp3 audio extraction"
 "$FF" -nostdin -v error -i "$T/av.mp4" -vn -c:a libmp3lame -q:a 4 "$T/audio.mp3"
 [ "$("$FP" -v error -show_entries stream=codec_name -of csv=p=0 "$T/audio.mp3")" = mp3 ] ||
 	fail "audio.mp3 is not mp3"
+
+step "hdr to sdr tone-mapping with zscale"
+"$FF" -nostdin -v error -f lavfi \
+	-i "testsrc2=size=128x128:rate=10:duration=1,format=yuv420p10le,setparams=color_primaries=bt2020:color_trc=arib-std-b67:colorspace=bt2020nc" \
+	-vf "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p" \
+	-c:v libx264 -color_primaries bt709 -color_trc bt709 -colorspace bt709 "$T/sdr.mp4"
+tags=$("$FP" -v error -select_streams v:0 -show_entries stream=pix_fmt,color_transfer,color_primaries -of csv=p=0 "$T/sdr.mp4")
+[ "$tags" = "yuv420p,bt709,bt709" ] || fail "unexpected tone-mapped stream: $tags"
 
 step "jpeg frames, showinfo timestamps and tiling"
 "$FF" -nostdin -i "$T/av.mp4" -vf "select='not(mod(n\,10))',showinfo,scale=64:-2,tile=2x2" \
